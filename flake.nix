@@ -11,6 +11,9 @@
     flake-utils,
     ...
   }: {
+    mkNixWork = pkgs: pkgs.writeShellScriptBin "nix-work" ''
+      ${pkgs.bash}/bin/bash ${./nix-work.bash}
+    '';
     mkZnFnl = (pname: version: mkLuaDeps: srcPath:
       let
         mkLua = luaPkgs: (luaPkgs.lua.withPackages mkLuaDeps);
