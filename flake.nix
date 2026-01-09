@@ -27,7 +27,7 @@
           preBuild = ''
             rm -rf dist
             mkdir dist
-            fennel --compile src/ctx.fnl > dist/ctx.lua
+            fennel --compile src/${pname}.fnl > dist/${pname}.lua
           '';
           postInstall = ''
             cp -r macro-path $out
