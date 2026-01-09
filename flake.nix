@@ -31,7 +31,7 @@
           preBuild = ''
             rm -rf dist
             mkdir dist
-            fennel --compile src/${pname}.fnl > dist/${pname}.lua
+            fennel --require-as-include --compile src/${pname}.fnl > dist/${pname}.lua
           '';
           postInstall = ''
             if [[ -d macro-path ]]; then
