@@ -30,7 +30,9 @@
             fennel --compile src/${pname}.fnl > dist/${pname}.lua
           '';
           postInstall = ''
-            cp -r macro-path $out
+            if [[ -d macro-path ]]; then
+              cp -r macro-path $out
+            fi
           '';
           knownRockspec = "${srcPath}/rockspecs/${pname}-${version}.rockspec";
           disabled = (luaPkgs.luaOlder "5.1") || (luaPkgs.luaAtLeast "5.4");
