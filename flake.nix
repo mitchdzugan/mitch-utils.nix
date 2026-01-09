@@ -31,6 +31,7 @@
           preBuild = ''
             rm -rf dist
             mkdir dist
+            export FENNEL_PATH="${srcPath}/src/?.fnl"
             fennel --require-as-include --compile src/${pname}.fnl > dist/${pname}.lua
           '';
           postInstall = ''
