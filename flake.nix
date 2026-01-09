@@ -67,6 +67,20 @@
               export FLAKE_ROOT=$(getFlakeRoot $(pwd))
               export FENNEL_MACRO_PATH="$FLAKE_ROOT/macro-path/?.fnl;${mkMacroPath(luaPkgs)}"
               export FENNEL_PATH="$FLAKE_ROOT/src/?.fnl"
+              function pretest {
+                for fspec in $FLAKE_ROOT/**/*_spec.fnl; do
+                  lspec=$fspec.lua
+                  f \
+                    --require-as-include \
+                    --correlate \
+                    --compile \
+                    --add-macro-path ${./fnl/macro-path/busted.fnl} \
+                    $fspec > $lspec
+                done
+              }
+              function t {
+                pretest && busted "$@"
+              }
             '';
           };
         }
