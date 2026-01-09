@@ -70,11 +70,10 @@
               function pretest {
                 for fspec in $FLAKE_ROOT/**/*_spec.fnl; do
                   lspec=$fspec.lua
-                  f \
+                  FENNEL_MACRO_PATH="${./fnl/macro-path}/?.fnl;$FENNEL_MACRO_PATH" f \
                     --require-as-include \
                     --correlate \
                     --compile \
-                    --add-macro-path ${./fnl/macro-path/busted.fnl} \
                     $fspec > $lspec
                 done
               }
