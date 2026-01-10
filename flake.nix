@@ -16,7 +16,32 @@
     '';
     mkZnFnl = (pname: version: mkLuaDepsRaw: srcPath:
       let
-        mkLuaDeps = lp: (mkLuaDepsRaw lp) ++ [lp.busted lp.fennel];
+        mkFnlFmt = luaPackages: luaPackages.lua.stdenv.mkDerivation {
+          pname = "fnlfmt";
+          version = "0.3.2";
+          src = ./REPO/fnlfmt/.;
+          nativeBuildInputs = [ luaPackages.fennel ];
+          buildInputs = [ luaPackages.lua ];
+          makeFlags = [
+            "PREFIX=$(out)"
+            "FENNEL=${luaPackages.fennel}/bin/fennel"
+          ];
+          sourceRoot = "${./REPO/fnlfmt/.}";
+          preBuild = ''
+            mkdir -p $out/wd
+            cp -r co $out/wd
+            cd $out/wd
+          '';
+          doInstallCheck = true;
+          installCheckPhase = ''
+            runHook preInstallCheck
+            $out/bin/fnlfmt --help > /dev/null
+            runHook postInstallCheck
+          '';
+        };
+        mkLuaDeps = lp: (mkLuaDepsRaw lp) ++ (
+          [lp.busted lp.fennel (mkFnlFmt lp)]
+        );
         mkLua = luaPkgs: (luaPkgs.lua.withPackages mkLuaDeps);
         mkMacroPath = luaPkgs: (
           builtins.concatStringsSep
