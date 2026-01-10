@@ -283,8 +283,13 @@ number of handled arguments."
 (local renames {"#" :length "~=" :not= :lambda "λ"})
 
 (fn body-form? [callee]
-  (or (?. syntax callee :body-form?) (callee:find "%.with-")
-      (callee:find :^with-) (callee:find "%.def") (callee:find :^def)))
+  (or (?. syntax callee :body-form?)
+      (callee:find "%.with-") (callee:find :^with-)
+      (callee:find "%.def") (callee:find :^def)
+      (callee:find "%.tail") (callee:find :^tail)
+      (callee:find "%.desc") (callee:find :^desc)
+      (callee:find "%.spec") (callee:find :^spec)
+      (callee:find "%.exec") (callee:find :^exec)))
 
 (fn view-list [t view inspector start-indent]
   (if (. sugars (tostring (. t 1)))
@@ -423,7 +428,7 @@ When f returns a truthy value, recursively walks the children."
         parser (-> (fennel.stringStream original)
                    (fennel.parser filename {:comments (not no-comments)
                                             :plugins [{: parse-form
-                                                       :versions ["1.5.1"]}]}))
+                                                       :versions ["1.6.0"]}]}))
         out []]
     (f:close)
     (var (skip-next? prev-ast) false)

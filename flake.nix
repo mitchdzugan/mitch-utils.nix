@@ -22,15 +22,17 @@
           src = ./REPO/fnlfmt/.;
           nativeBuildInputs = [ luaPackages.fennel ];
           buildInputs = [ luaPackages.lua ];
-          makeFlags = [
-            "PREFIX=$(out)"
-            "FENNEL=${luaPackages.fennel}/bin/fennel"
-          ];
-          sourceRoot = "${./REPO/fnlfmt/.}";
-          preBuild = ''
-            mkdir -p $out/wd
-            cp -r co $out/wd
-            cd $out/wd
+          propogatedBuildInputs = [ luaPackages.lua ];
+          buildPhase = ''
+            mkdir -p $out/bin
+            echo "#!${luaPackages.lua}/bin/lua" > $out/bin/fnlfmt
+            fennel \
+              --require-as-include \
+              --add-fennel-path "$(pwd)/co/?.fnl" \
+              --compile \
+              "$(pwd)/co/cli.fnl" >> $out/bin/fnlfmt
+            chmod +x $out/bin/fnlfmt
+            echo $out
           '';
           doInstallCheck = true;
           installCheckPhase = ''
@@ -39,9 +41,7 @@
             runHook postInstallCheck
           '';
         };
-        mkLuaDeps = lp: (mkLuaDepsRaw lp) ++ (
-          [lp.busted lp.fennel (mkFnlFmt lp)]
-        );
+        mkLuaDeps = lp: (mkLuaDepsRaw lp) ++ [lp.busted lp.fennel];
         mkLua = luaPkgs: (luaPkgs.lua.withPackages mkLuaDeps);
         mkMacroPath = luaPkgs: (
           builtins.concatStringsSep
@@ -69,10 +69,11 @@
         }; in { mkPkg = mkPkg; } // flake-utils.lib.eachDefaultSystem (
         system: let
           pkgs = nixpkgs.legacyPackages.${system};
-          luaPkgs = pkgs.lua5_1.pkgs;
+          luaPkgs = pkgs.luajit.pkgs;
           nativeBuildInputs = with pkgs; [];
           buildInputs = with pkgs; [
               (mkLua luaPkgs)
+              (mkFnlFmt luaPackages)
               fennel-ls
               rlwrap
             ];
