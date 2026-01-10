@@ -86,6 +86,7 @@
 
 
               echo "#!/usr/bin/env bash"                          > $TEMP_DIR/pretest
+              echo "cd $FLAKE_ROOT"                              >> $TEMP_DIR/pretest
               echo "for fspec in \$FLAKE_ROOT/**/*_spec.fnl; do" >> $TEMP_DIR/pretest
               echo "  lspec=\$fspec.lua"                         >> $TEMP_DIR/pretest
               echo "  fennel \\"                                 >> $TEMP_DIR/pretest
@@ -97,6 +98,7 @@
               chmod +x $TEMP_DIR/pretest
 
               echo "#!/usr/bin/env bash"        > $TEMP_DIR/fusted
+              echo "cd $FLAKE_ROOT"            >> $TEMP_DIR/fusted
               echo "pretest && busted \"\$@\"" >> $TEMP_DIR/fusted
               chmod +x $TEMP_DIR/fusted
 
