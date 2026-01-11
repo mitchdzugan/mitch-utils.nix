@@ -31,6 +31,8 @@ cd $WD || exit
 #### /END  UNUSED WITH NEW METHOD FOR RELOADING
 
 echo "function nix-reload"     > $WD/source.fish
+echo "  cd $WD/project"        >> $WD/source.fish
+echo "  nix flake update"      >> $WD/source.fish
 echo "  echo reload > $WD/cmd" >> $WD/source.fish
 echo "  exit 0"                >> $WD/source.fish
 echo "end"                     >> $WD/source.fish

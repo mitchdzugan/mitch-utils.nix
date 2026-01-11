@@ -14,6 +14,22 @@
     mkNixWork = pkgs: pkgs.writeShellScriptBin "nix-work" ''
       ${pkgs.bash}/bin/bash ${./nix-work.bash}
     '';
+    mkPegasus = luaPackages: luaPackages.buildLuarocksPackage {
+      pname = "pegasus";
+      version = "1.0.9-0";
+      src = builtins.fetchTarball {
+        url = "https://github.com/EvandroLG/pegasus.lua/archive/refs/tags/v1.0.9.tar.gz";
+        sha256 = "sha256:0k264w899xpjfpkz96c2bdmdsk98xpmd5fn2362k9g8ggml927bl";
+      };
+      knownRockspec = ./pegasus-1.0.9-0.rockspec;
+      propagatedBuildInputs = [
+        luaPackages.lua-zlib
+        luaPackages.mimetypes
+        luaPackages.luasocket
+        luaPackages.lua
+        luaPackages.luafilesystem
+      ];
+    };
     mkZnFnl = (pname: version: mkLuaDepsRaw: srcPath:
       let
         mkFnlFmt = luaPackages: luaPackages.lua.stdenv.mkDerivation {
@@ -69,7 +85,8 @@
         }; in { mkPkg = mkPkg; } // flake-utils.lib.eachDefaultSystem (
         system: let
           pkgs = nixpkgs.legacyPackages.${system};
-          luaPkgs = pkgs.luajit.pkgs;
+          lua = pkgs.luajit;
+          luaPkgs = lua.pkgs;
           nativeBuildInputs = with pkgs; [];
           buildInputs = with pkgs; [
               (mkLua luaPkgs)
@@ -78,7 +95,7 @@
               rlwrap
             ];
         in {
-          packages.default = mkPkg pkgs.lua5_1.pkgs;
+          packages.default = mkPkg lua.pkgs;
           devShells.default = pkgs.mkShell {
             inherit nativeBuildInputs buildInputs;
             shellHook = ''
@@ -94,7 +111,7 @@
                 fi
               }
               export FLAKE_ROOT=$(getFlakeRoot $(pwd))
-              export FENNEL_MACRO_PATH="$FLAKE_ROOT/macro-path/?.fnl;${mkMacroPath(luaPkgs)}"
+              export FENNEL_MACRO_PATH="$FLAKE_ROOT/macro-path/?.fnl;${mkMacroPath luaPkgs}"
               export FENNEL_MACRO_PATH="${./fnl/macro-path}/?.fnl;$FENNEL_MACRO_PATH"
               export FENNEL_PATH="$FLAKE_ROOT/src/?.fnl"
               echo "{:fennel-path \"$FENNEL_PATH\""       > $FLAKE_ROOT/flsproject.fnl
