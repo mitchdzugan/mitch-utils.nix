@@ -12,7 +12,7 @@
     ...
   }:
   let
-    mkPegasus = luaPackages: luaPackages.buildLuarocksPackage {
+    mkPegasus = env: env.luaPackages.buildLuarocksPackage {
       pname = "pegasus";
       version = "1.0.9-0";
       src = builtins.fetchTarball {
@@ -21,11 +21,11 @@
       };
       knownRockspec = ./pegasus-1.0.9-0.rockspec;
       propagatedBuildInputs = [
-        luaPackages.lua-zlib
-        luaPackages.mimetypes
-        luaPackages.luasocket
-        luaPackages.lua
-        luaPackages.luafilesystem
+        env.luaPackages.lua-zlib
+        env.luaPackages.mimetypes
+        env.luaPackages.luasocket
+        env.luaPackages.lua
+        env.luaPackages.luafilesystem
       ];
     };
     mkZnFnlImpl = (envExtra: srcPath:
