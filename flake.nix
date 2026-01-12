@@ -10,10 +10,8 @@
     nixpkgs,
     flake-utils,
     ...
-  }: {
-    mkNixWork = pkgs: pkgs.writeShellScriptBin "nix-work" ''
-      ${pkgs.bash}/bin/bash ${./nix-work.bash}
-    '';
+  }:
+  let
     mkPegasus = luaPackages: luaPackages.buildLuarocksPackage {
       pname = "pegasus";
       version = "1.0.9-0";
@@ -30,18 +28,23 @@
         luaPackages.luafilesystem
       ];
     };
-    mkZnFnl = (pname: version: mkLuaDepsRaw: srcPath:
+  in {
+    mkNixWork = pkgs: pkgs.writeShellScriptBin "nix-work" ''
+      ${pkgs.bash}/bin/bash ${./nix-work.bash}
+    '';
+    mkPegasus = mkPegasus;
+    mkZnFnl = (srcPath:
       let
-        mkFnlFmt = luaPackages: luaPackages.lua.stdenv.mkDerivation {
+        mkFnlFmt = env: env.luaPackages.lua.stdenv.mkDerivation {
           pname = "fnlfmt";
           version = "0.3.2";
           src = ./REPO/fnlfmt/.;
-          nativeBuildInputs = [ luaPackages.fennel ];
-          buildInputs = [ luaPackages.lua ];
-          propogatedBuildInputs = [ luaPackages.lua ];
+          nativeBuildInputs = [ env.luaPackages.fennel ];
+          buildInputs = [ env.luaPackages.lua ];
+          propogatedBuildInputs = [ env.luaPackages.lua ];
           buildPhase = ''
             mkdir -p $out/bin
-            echo "#!${luaPackages.lua}/bin/lua" > $out/bin/fnlfmt
+            echo "#!${env.luaPackages.lua}/bin/lua" > $out/bin/fnlfmt
             fennel \
               --require-as-include \
               --add-fennel-path "$(pwd)/co/?.fnl" \
@@ -57,18 +60,21 @@
             runHook postInstallCheck
           '';
         };
-        mkLuaDeps = lp: (mkLuaDepsRaw lp) ++ [lp.busted lp.fennel];
-        mkLua = luaPkgs: (luaPkgs.lua.withPackages mkLuaDeps);
-        mkMacroPath = luaPkgs: (
+        mkProps = env: ((import (srcPath + "/flake.dz-fnl.nix")) (env // {mkPegasus = mkPegasus;}));
+        mkLuaDeps = env: (mkProps env).luaDeps ++ [env.luaPackages.busted env.luaPackages.fennel];
+        mkLua = env: (env.luaPackages.lua.withPackages (_: (mkLuaDeps env)));
+        mkMacroPath = env: (
           builtins.concatStringsSep
           ";"
-          (map (pkg: "${pkg}/macro-path/?.fnl") (mkLuaDeps luaPkgs))
+          (map (pkg: "${pkg}/macro-path/?.fnl") (mkLuaDeps env))
         );
-        mkPkg = luaPkgs: luaPkgs.buildLuarocksPackage {
-          pname = pname;
-          version = version;
+        extraBuildInputsOfProps = ({ buildInputs ? [], ... }: buildInputs);
+        mkExtraBuildInputs = env: (extraBuildInputsOfProps (mkProps env));
+        mkPkg = env: env.luaPackages.buildLuarocksPackage rec {
+          pname = (mkProps env).name;
+          version = (mkProps env).version;
           src = srcPath;
-          buildInputs = [(mkLua luaPkgs)];
+          buildInputs = (mkExtraBuildInputs env) ++ [(mkLua env)];
           preBuild = ''
             rm -rf dist
             mkdir dist
@@ -81,19 +87,20 @@
             fi
           '';
           knownRockspec = "${srcPath}/rockspecs/${pname}-${version}.rockspec";
-          disabled = (luaPkgs.luaOlder "5.1") || (luaPkgs.luaAtLeast "5.4");
+          disabled = (env.luaPackages.luaOlder "5.1") || (env.luaPackages.luaAtLeast "5.4");
         }; in { mkPkg = mkPkg; } // flake-utils.lib.eachDefaultSystem (
         system: let
           pkgs = nixpkgs.legacyPackages.${system};
           lua = pkgs.luajit;
-          luaPkgs = lua.pkgs;
+          luaPackages = lua.pkgs;
+          env = { luaPackages = luaPackages; pkgs = pkgs; };
           nativeBuildInputs = with pkgs; [];
           buildInputs = with pkgs; [
-              (mkLua luaPkgs)
-              (mkFnlFmt luaPackages)
-              fennel-ls
-              rlwrap
-            ];
+            (mkLua env)
+            (mkFnlFmt env)
+            fennel-ls
+            rlwrap
+          ] ++ (mkExtraBuildInputs env);
         in {
           packages.default = mkPkg lua.pkgs;
           devShells.default = pkgs.mkShell {
@@ -111,7 +118,7 @@
                 fi
               }
               export FLAKE_ROOT=$(getFlakeRoot $(pwd))
-              export FENNEL_MACRO_PATH="$FLAKE_ROOT/macro-path/?.fnl;${mkMacroPath luaPkgs}"
+              export FENNEL_MACRO_PATH="$FLAKE_ROOT/macro-path/?.fnl;${mkMacroPath env}"
               export FENNEL_MACRO_PATH="${./fnl/macro-path}/?.fnl;$FENNEL_MACRO_PATH"
               export FENNEL_PATH="$FLAKE_ROOT/src/?.fnl"
               echo "{:fennel-path \"$FENNEL_PATH\""       > $FLAKE_ROOT/flsproject.fnl
