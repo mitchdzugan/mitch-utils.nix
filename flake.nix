@@ -28,12 +28,7 @@
         luaPackages.luafilesystem
       ];
     };
-  in {
-    mkNixWork = pkgs: pkgs.writeShellScriptBin "nix-work" ''
-      ${pkgs.bash}/bin/bash ${./nix-work.bash}
-    '';
-    mkPegasus = mkPegasus;
-    mkZnFnl = (srcPath:
+    mkZnFnlImpl = (envExtra: srcPath:
       let
         mkFnlFmt = env: env.luaPackages.lua.stdenv.mkDerivation {
           pname = "fnlfmt";
@@ -60,7 +55,7 @@
             runHook postInstallCheck
           '';
         };
-        mkProps = env: ((import (srcPath + "/flake.dz-fnl.nix")) (env // {mkPegasus = mkPegasus;}));
+        mkProps = env: ((import (srcPath + "/flake.dz-fnl.nix")) (env // envExtra // {mkPegasus = mkPegasus;}));
         mkLuaDeps = env: (mkProps env).luaDeps ++ [env.luaPackages.busted env.luaPackages.fennel];
         mkLua = env: (env.luaPackages.lua.withPackages (_: (mkLuaDeps env)));
         mkMacroPath = env: (
@@ -158,5 +153,14 @@
         }
       )
     );
+  in {
+    mkNixWork = pkgs: pkgs.writeShellScriptBin "nix-work" ''
+      ${pkgs.bash}/bin/bash ${./nix-work.bash}
+    '';
+    mkPegasus = mkPegasus;
+    mkZnFnl = arg1:
+      (if (builtins.isPath arg1)
+        then (mkZnFnlImpl {} arg1)
+        else (srcPath: (mkZnFnlImpl arg1 srcPath)));
   };
 }
