@@ -116,18 +116,29 @@
               export FENNEL_MACRO_PATH="$FLAKE_ROOT/macro-path/?.fnl;${mkMacroPath env}"
               export FENNEL_MACRO_PATH="${./fnl/macro-path}/?.fnl;$FENNEL_MACRO_PATH"
               export FENNEL_PATH="$FLAKE_ROOT/src/?.fnl"
+
               echo "{:fennel-path \"$FENNEL_PATH\""       > $FLAKE_ROOT/flsproject.fnl
               echo " :macro-path \"$FENNEL_MACRO_PATH\"" >> $FLAKE_ROOT/flsproject.fnl
               echo " :extra-globals \"it describe\""     >> $FLAKE_ROOT/flsproject.fnl
               echo "}"                                   >> $FLAKE_ROOT/flsproject.fnl
 
+              mkdir -p $FLAKE_ROOT/.vscode
+              vscodeSettingsPath="$FLAKE_ROOT/.vscode/settings.json"
+              echo "{\"fennel-ls.fennel-path\": \"$FENNEL_PATH\","       > $vscodeSettingsPath
+              echo " \"fennel-ls.macro-path\": \"$FENNEL_MACRO_PATH\"," >> $vscodeSettingsPath
+              echo " \"fennel-ls.extra-globals\": \"it describe\","     >> $vscodeSettingsPath
+              echo " \"customLocalFormatters.formatters\": [{"          >> $vscodeSettingsPath
+              echo "   \"command\": \"fnlfmt $""{file}\","              >> $vscodeSettingsPath
+              echo "   \"languages\": [\"fennel\"]"                     >> $vscodeSettingsPath
+              echo " }]}"                                               >> $vscodeSettingsPath
+
               TEMP_DIR=$(mktemp -d --)
               trap 'rm -rf "$TEMP_DIR"' EXIT
 
               fennel_path=$(which fennel)
-              echo "#!/usr/bin/env bash"              > $TEMP_DIR/fennel
-              echo "rlwrap \"$fennel_path\" \"\$@\"" >> $TEMP_DIR/fennel
-              chmod +x $TEMP_DIR/fennel
+              # echo "#!/usr/bin/env bash"              > $TEMP_DIR/fennel
+              # echo "rlwrap \"$fennel_path\" \"\$@\"" >> $TEMP_DIR/fennel
+              # chmod +x $TEMP_DIR/fennel
 
 
               echo "#!/usr/bin/env bash"                          > $TEMP_DIR/pretest
