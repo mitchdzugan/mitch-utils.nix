@@ -115,7 +115,10 @@ We want everything to be on one line as much as possible, (except for let)."
 
 (local fn-forms {:fn true :lambda true "λ" true :macro true})
 
-(local force-initial-newline {:do true :eval-compiler true})
+(local force-initial-newline {"M$" true
+                              "_.M$" true
+                              :do true
+                              :eval-compiler true})
 
 (local slength (or (-?> (rawget _G :utf8) (. :len))
                    ;; utf8-len from from fennel.view
@@ -283,13 +286,12 @@ number of handled arguments."
 (local renames {"#" :length "~=" :not= :lambda "λ"})
 
 (fn body-form? [callee]
-  (or (?. syntax callee :body-form?)
-      (callee:find "%.with-") (callee:find :^with-)
-      (callee:find "%.def") (callee:find :^def)
-      (callee:find "%.tail") (callee:find :^tail)
-      (callee:find "%.desc") (callee:find :^desc)
-      (callee:find "%.spec") (callee:find :^spec)
-      (callee:find "%.exec") (callee:find :^exec)))
+  (or (?. syntax callee :body-form?) (callee:find "%.with-")
+      (callee:find :^with-) (callee:find "%.def") (callee:find :^def)
+      (callee:find "%.tail") (callee:find :^tail) (callee:find "%.desc")
+      (callee:find :^desc) (callee:find "%.spec") (callee:find :^spec)
+      (callee:find "%.M%$") (callee:find "^M%$") (callee:find "%.exec")
+      (callee:find :^exec)))
 
 (fn view-list [t view inspector start-indent]
   (if (. sugars (tostring (. t 1)))
@@ -426,9 +428,9 @@ When f returns a truthy value, recursively walks the children."
             _ (or (io.open filename :r) (abort filename)))
         original (f:read :*all)
         parser (-> (fennel.stringStream original)
-                   (fennel.parser filename {:comments (not no-comments)
-                                            :plugins [{: parse-form
-                                                       :versions ["1.6.0"]}]}))
+                   (fennel.parser filename
+                                  {:comments (not no-comments)
+                                   :plugins [{: parse-form :versions ["1.6.1"]}]}))
         out []]
     (f:close)
     (var (skip-next? prev-ast) false)
