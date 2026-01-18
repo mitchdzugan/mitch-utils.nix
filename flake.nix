@@ -193,7 +193,7 @@
           echo " :extra-globals \"it describe\""     >> $TEMP_DIR/nixMinimal.fnl
           echo "}"                                   >> $TEMP_DIR/nixMinimal.fnl
 
-          cp "$FLAKE_ROOT/flsproject.template.fnl" "$TEMP_DIR/template.fnl"
+          cp "$FLAKE_ROOT/flsproject.template.fnl" "$TEMP_DIR/template.fnl" 2> /dev/null
           if [ ! -f "$TEMP_DIR/template.fnl" ]; then
             echo "{}" > "$TEMP_DIR/template.fnl"
           fi
