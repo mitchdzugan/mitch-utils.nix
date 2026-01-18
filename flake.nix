@@ -39,10 +39,7 @@
     mkLuaColors = lua: lua.pkgs.buildLuarocksPackage {
       pname = "lua-color";
       version = "1.2-5";
-      knownRockspec = (builtins.fetchurl {
-        url    = "mirror://luarocks/lua-color-1.2-5.rockspec";
-        sha256 = "01skysglq2sr9mwapp2px78mxkqbb7961lcchq7lrjpsvaymw6mn";
-      });
+      knownRockspec = ./lua-color-1.2-5.rockspec;
       src = fetchFromGitHub {
         owner = "Firanel";
         repo = "lua-color";
