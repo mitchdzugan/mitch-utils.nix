@@ -117,6 +117,8 @@ We want everything to be on one line as much as possible, (except for let)."
 
 (local force-initial-newline {"M$" true
                               "_.M$" true
+                              "module" true
+                              "_.module" true
                               :do true
                               :eval-compiler true})
 
@@ -288,10 +290,10 @@ number of handled arguments."
 (fn body-form? [callee]
   (or (?. syntax callee :body-form?) (callee:find "%.with-")
       (callee:find :^with-) (callee:find "%.def") (callee:find :^def)
-      (callee:find "%.tail") (callee:find :^tail) (callee:find "%.desc")
-      (callee:find :^desc) (callee:find "%.spec") (callee:find :^spec)
-      (callee:find "%.M%$") (callee:find "^M%$") (callee:find "%.exec")
-      (callee:find :^exec)))
+      (callee:find "%.tail") (callee:find :^tail) (callee:find "%.module")
+      (callee:find :^module) (callee:find "%.desc") (callee:find :^desc)
+      (callee:find "%.spec") (callee:find :^spec) (callee:find "%.M%$")
+      (callee:find "^M%$") (callee:find "%.exec") (callee:find :^exec)))
 
 (fn view-list [t view inspector start-indent]
   (if (. sugars (tostring (. t 1)))
