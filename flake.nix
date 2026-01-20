@@ -133,11 +133,16 @@
           pkgs.fennel-ls
           pkgs.rlwrap
         ]);
+        mkPropagatedBuildInputsOfProps = (
+          { mkPropagatedBuildInputs ? (_: []), ... }: mkPropagatedBuildInputs
+        );
+        mkPropagatedBuildInputs = pkgs: (mkPropagatedBuildInputsOfProps props);
         mkPkg = pkgs: (_lp pkgs).buildLuarocksPackage rec {
           pname = props.name;
           version = props.version;
           src = srcPath;
-          buildInputs = (mkExtraBuildInputs pkgs) ++ [(mkLuaPkg pkgs)];
+          buildInputs = mkBuildInputs pkgs;
+          propagatedBuildInputs = mkPropagatedBuildInputs (_e pkgs);
           preBuild = ''
             rm -rf dist
             mkdir dist
