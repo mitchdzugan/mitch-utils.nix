@@ -169,6 +169,8 @@ number of handled arguments."
 
 (local one-element-per-line-forms {:-> true
                                    :->> true
+                                   :module true
+                                   :_.module true
                                    :-?> true
                                    :-?>> true
                                    :if true})
