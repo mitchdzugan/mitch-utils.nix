@@ -136,7 +136,7 @@
         mkPropagatedBuildInputsOfProps = (
           { mkPropagatedBuildInputs ? (_: []), ... }: mkPropagatedBuildInputs
         );
-        mkPropagatedBuildInputs = pkgs: (mkPropagatedBuildInputsOfProps props);
+        mkPropagatedBuildInputs = mkPropagatedBuildInputsOfProps props;
         mkPkg = pkgs: (_lp pkgs).buildLuarocksPackage rec {
           pname = props.name;
           version = props.version;
