@@ -115,6 +115,13 @@ We want everything to be on one line as much as possible, (except for let)."
 
 (local fn-forms {:fn true :lambda true "λ" true :macro true})
 
+(local SPECIAL_MACRO_FORMS {:module true :_.module true})
+
+(fn SI* [callee regular-indent]
+  (if (. SPECIAL_MACRO_FORMS callee)
+      1
+      regular-indent))
+
 (local force-initial-newline {"M$" true
                               "_.M$" true
                               "module" true
@@ -132,11 +139,11 @@ We want everything to be on one line as much as possible, (except for let)."
   "Certain forms need special handling of their first few args. Returns the
 number of handled arguments."
   (if (. force-initial-newline callee)
-      (table.insert out (.. "\n" (string.rep " " start-indent)))
+      (table.insert out (.. "\n" (string.rep " " (SI* callee start-indent))))
       (not= nil (. t 2))
       (table.insert out " "))
   (let [indent (if (. force-initial-newline callee)
-                   start-indent
+                   (SI* callee start-indent)
                    (+ start-indent (slength callee)))
         ;; the handling of function args is very messy; sometimes they are
         ;; handled here and sometimes they're down in view-fn-args; kinda bad.
@@ -209,7 +216,7 @@ number of handled arguments."
         ;; do and if don't actually have special indentation but they do need
         ;; a newline after every form, so we can't use normal call formatting
         indent (if (. one-element-per-line-forms callee)
-                   (+ start-indent (length callee))
+                   (SI* callee (+ start-indent (length callee)))
                    start-indent)]
     (for [i (or start-index (+ (length t) 1)) (length t)]
       (let [viewed (view (. t i) inspector indent)
