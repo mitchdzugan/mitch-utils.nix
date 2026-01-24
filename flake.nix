@@ -137,7 +137,7 @@
           { mkPropagatedBuildInputs ? (_: []), ... }: mkPropagatedBuildInputs
         );
         mkPropagatedBuildInputs = mkPropagatedBuildInputsOfProps props;
-        mkPkg = pkgs: (_lp pkgs).buildLuarocksPackage rec {
+        mkRawPkg = pkgs: (_lp pkgs).buildLuarocksPackage rec {
           pname = props.name;
           version = props.version;
           src = srcPath;
@@ -248,6 +248,7 @@
           export PATH="$TEMP_DIR:$PATH"
           fi
         '';
+        mkPkg = pkgs: mkRawPkg pkgs;
         madeOutputs = {
           inherit mkPkg mkShellHook mkBuildInputs;
         }; in madeOutputs // flake-utils.lib.eachDefaultSystem (
@@ -261,7 +262,7 @@
             rlwrap
           ] ++ (mkExtraBuildInputs pkgs);
         in {
-          packages.default = mkPkg (_lua pkgs);
+          packages.default = mkPkg pkgs;
           devShells.default = pkgs.mkShell {
             inherit nativeBuildInputs buildInputs;
             shellHook = mkShellHook pkgs;
