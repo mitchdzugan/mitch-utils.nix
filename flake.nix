@@ -125,8 +125,10 @@
           ";"
           (map (pkg: "${pkg}/macro-path/?.fnl") (mkLuaDeps pkgs))
         );
-        extraBuildInputsOfProps = ({ buildInputs ? [], ... }: buildInputs);
-        mkExtraBuildInputs = pkgs: (extraBuildInputsOfProps pkgs);
+        mkExtraBuildInputsOfProps = (
+          { mkBuildInputs ? (_: []), ... }: mkBuildInputs
+        );
+        mkExtraBuildInputs = mkExtraBuildInputsOfProps props;
         mkBuildInputs = pkgs: ((mkExtraBuildInputs pkgs) ++ [
           (mkLuaPkg pkgs)
           (mkFnlFmt (_lua pkgs))
