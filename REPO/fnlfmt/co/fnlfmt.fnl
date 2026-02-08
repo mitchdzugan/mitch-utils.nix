@@ -298,6 +298,7 @@ number of handled arguments."
 
 (fn body-form? [callee]
   (or (?. syntax callee :body-form?) (callee:find "%.with-")
+      (callee:find :^summary) (callee:find :^details) (callee:find :^ul)
       (callee:find :^div) (callee:find :^button) (callee:find :^a)
       (callee:find :^abbr) (callee:find :^address) (callee:find :^area)
       (callee:find :^article) (callee:find :^aside) (callee:find :^audio)
