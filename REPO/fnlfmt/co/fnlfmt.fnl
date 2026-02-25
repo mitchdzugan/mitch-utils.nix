@@ -65,20 +65,18 @@ Returns the index of where the body of the function starts."
 (fn break-pair? [let? count viewed next-ast next-next indent]
   (if let?
       (and (= 1 (math.fmod count 2))
-           (not (and (fennel.comment? next-ast)
-                     ; does the trailing comment fit?
-                     (<= (+ indent 1 (last-line-length viewed) 1
-                            (length (tostring next-ast)))
-                         80))))
+        (not (and (fennel.comment? next-ast) ; does the trailing comment fit?
+               (<= (+ indent 1 (last-line-length viewed) 1
+                      (length (tostring next-ast))) 80))))
       ;; if it's not a let, it's probably an iterator binding
       (and (or (string? next-ast) (: (tostring next-ast) :find "^&"))
-           (< 80 (+ indent 1 (last-line-length viewed) 1
-                    (length (tostring next-ast))
-                    (length (fennel.view next-next)))))))
+        (< 80
+           (+ indent 1 (last-line-length viewed) 1 (length (tostring next-ast))
+              (length (fennel.view next-next)))))))
 
 (fn binding-comment [c indent out start-indent]
   (when (and (< 80 (+ indent (length (tostring c))))
-             (: (. out (length out)) :match "^[^%s]"))
+          (: (. out (length out)) :match "^[^%s]"))
     (table.insert out (.. "\n" (string.rep " " start-indent))))
   (when (and (not (first-thing-in-line? out)) (not= (length out) 1))
     (table.insert out " "))
@@ -115,7 +113,7 @@ We want everything to be on one line as much as possible, (except for let)."
 
 (local fn-forms {:fn true :lambda true "λ" true :macro true})
 
-(local SPECIAL_MACRO_FORMS {:module true :_.module true})
+(local SPECIAL_MACRO_FORMS {:module true :_.module true :__.module true})
 
 (fn SI* [callee regular-indent]
   (if (. SPECIAL_MACRO_FORMS callee)
@@ -126,6 +124,7 @@ We want everything to be on one line as much as possible, (except for let)."
                               "_.M$" true
                               "module" true
                               "_.module" true
+                              "__.module" true
                               :do true
                               :eval-compiler true})
 
@@ -148,7 +147,7 @@ number of handled arguments."
         ;; the handling of function args is very messy; sometimes they are
         ;; handled here and sometimes they're down in view-fn-args; kinda bad.
         second (if (and (?. syntax callee :binding-form?)
-                        (not= :unquote (tostring (. t 2 1))))
+                     (not= :unquote (tostring (. t 2 1))))
                    (view-binding (. t 2) view inspector (+ indent 1)
                                  (= :let callee)
                                  (if (fennel.list? (. t 2))
@@ -167,9 +166,11 @@ number of handled arguments."
 
 (fn match-same-line? [callee i out viewed t]
   ;; just don't even try if there's comments!
-  (and (match? callee) (= 0 (math.fmod i 2)) (not (any? t fennel.comment?))
-       (<= (+ (or (string.find viewed "\n") (length (viewed:match "[^\n]*$")))
-              1 (last-line-length (. out (length out)))) 80)))
+  (and (match? callee)
+    (= 0 (math.fmod i 2))
+    (not (any? t fennel.comment?))
+    (<= (+ (or (string.find viewed "\n") (length (viewed:match "[^\n]*$"))) 1
+           (last-line-length (. out (length out)))) 80)))
 
 (fn trailing-comment? [viewed body-indent]
   (and (viewed:match "^; ") (<= body-indent 80)))
@@ -178,6 +179,7 @@ number of handled arguments."
                                    :->> true
                                    :module true
                                    :_.module true
+                                   :__.module true
                                    :-?> true
                                    :-?>> true
                                    :if true})
@@ -187,8 +189,8 @@ number of handled arguments."
         lambda-pattern "^ *%(λ [^%[]"]
     ;; functions inside a body form shouldn't be spaced if they're the first thing
     (and (not (= start-index i))
-         (or (prev:match fn-pattern) (prev:match lambda-pattern)
-             (viewed:match fn-pattern) (viewed:match lambda-pattern)))))
+      (or (prev:match fn-pattern) (prev:match lambda-pattern)
+          (viewed:match fn-pattern) (viewed:match lambda-pattern)))))
 
 (fn originally-same-lines? [t n1 n2]
   (let [first (. t n1)
@@ -207,8 +209,9 @@ number of handled arguments."
 
 (fn preserve-same-line? [t i indent out viewed depth]
   (and (<= (+ indent (length (table.concat out)) (length viewed)) 80)
-       (<= depth 3) (not (fennel.comment? (. t (- i 1))))
-       (and (originally-same-lines? t 1 i) (not (viewed:find "\n")))))
+    (<= depth 3)
+    (not (fennel.comment? (. t (- i 1))))
+    (and (originally-same-lines? t 1 i) (not (viewed:find "\n")))))
 
 (fn view-body [t view inspector start-indent out callee]
   "Insert arguments to a call to a special that takes body arguments."
@@ -268,10 +271,14 @@ number of handled arguments."
   (.. (view a) " " (view b) (if (fennel.comment? c) (.. " " (view c)) "")))
 
 (fn pairwise-if? [t indent i view]
-  (if (< (length (strip-comments t)) 5) false
-      (not= :if (tostring (. t 1))) false
-      (not (. t i)) true
-      (< 80 (+ indent 1 (length (if-pair view (select i (unpack t)))))) false
+  (if (< (length (strip-comments t)) 5)
+      false
+      (not= :if (tostring (. t 1)))
+      false
+      (not (. t i))
+      true
+      (< 80 (+ indent 1 (length (if-pair view (select i (unpack t))))))
+      false
       (pairwise-if? t indent (if (fennel.comment (. t (+ i 2)))
                                  (+ i 3)
                                  (+ i 2)) view)))
@@ -407,7 +414,7 @@ When f returns a truthy value, recursively walks the children."
 (fn prefer-colon? [s]
   ;; it has to be a legal colon-string, but it shouldn't be *just* punctuation
   (and (s:find "^[-%w?^_!$%&*+./|<=>]+$")
-       (not (s:find "^[-?^_!$%&*+./@|<=>%\\]+$"))))
+    (not (s:find "^[-?^_!$%&*+./@|<=>%\\]+$"))))
 
 (fn fnlfmt [ast]
   "Return a formatted representation of ast."
@@ -427,14 +434,17 @@ When f returns a truthy value, recursively walks the children."
 
 (fn space-out-forms? [prev-ast ast]
   "Use previous line numbering to determine whether to space out forms."
-  (not (and (line prev-ast) (line ast) (= 1 (- (line ast) (line prev-ast))))))
+  (not (and (line prev-ast)
+         (line ast)
+         (= 1 (- (line ast) (line prev-ast))))))
 
 (fn abort [filename]
   (io.stderr:write (string.format "File not found: %s\n" filename))
   (os.exit 1))
 
 (fn parse-form [value source raw]
-  (if (and raw (or (= :string (type value)) (= :number (type value))))
+  (if (and raw
+        (or (= :string (type value)) (= :number (type value))))
       (setmetatable (doto source
                       (tset :raw raw)
                       (tset :value value)) raw-mt)

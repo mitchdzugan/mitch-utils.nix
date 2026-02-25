@@ -212,9 +212,8 @@
             (fennel.view template))
           EOF
 
-          fennel_path=${(mkLuaPkg pkgs).pkgs.fennel}/bin/fennel
 
-          ${(mkLuaPkg pkgs).pkgs.fennel}/bin/fennel --eval "$FENNEL_EVAL_STR" > $FLAKE_ROOT/flsproject.fnl
+          fennel --eval "$FENNEL_EVAL_STR" > $FLAKE_ROOT/flsproject.fnl
           popd
 
           mkdir -p $FLAKE_ROOT/.vscode
@@ -226,6 +225,8 @@
           echo "   \"command\": \"fnlfmt $""{file}\","              >> $vscodeSettingsPath
           echo "   \"languages\": [\"fennel\"]"                     >> $vscodeSettingsPath
           echo " }]}"                                               >> $vscodeSettingsPath
+
+          fennel_path=$(which fennel)
 
           echo "#!/usr/bin/env bash"              > $TEMP_DIR/fennel
           echo "rlwrap \"$fennel_path\" \"\$@\"" >> $TEMP_DIR/fennel
