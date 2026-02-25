@@ -75,7 +75,7 @@
       buildPhase = ''
         mkdir -p $out/bin
         echo "#!${lua}/bin/lua" > $out/bin/fnlfmt
-        fennel \
+        ${lua.pkgs.fennel}/bin/fennel \
           --require-as-include \
           --add-fennel-path "$(pwd)/co/?.fnl" \
           --compile \
@@ -151,7 +151,7 @@
             export FENNEL_MACRO_PATH="${mkMacroPath pkgs}"
             export FENNEL_MACRO_PATH="${./fnl/macro-path}/?.fnl;$FENNEL_MACRO_PATH"
             export FENNEL_PATH="${srcPath}/src/?.fnl"
-            fennel --require-as-include --compile src/${pname}.fnl > dist/${pname}.lua
+            ${(_lp pkgs).fennel}/bin/fennel --require-as-include --compile src/${pname}.fnl > dist/${pname}.lua
           '';
           postInstall = ''
             if [[ -d macro-path ]]; then
@@ -211,7 +211,10 @@
             (set template.extra-globals (.. nix-min.extra-globals " " (or template.extra-globals "")))
             (fennel.view template))
           EOF
-          fennel --eval "$FENNEL_EVAL_STR" > $FLAKE_ROOT/flsproject.fnl
+
+          fennel_path=${(mkLuaPkg pkgs).pkgs.fennel}/bin/fennel
+
+          ${(mkLuaPkg pkgs).pkgs.fennel}/bin/fennel --eval "$FENNEL_EVAL_STR" > $FLAKE_ROOT/flsproject.fnl
           popd
 
           mkdir -p $FLAKE_ROOT/.vscode
@@ -224,7 +227,6 @@
           echo "   \"languages\": [\"fennel\"]"                     >> $vscodeSettingsPath
           echo " }]}"                                               >> $vscodeSettingsPath
 
-          fennel_path=$(which fennel)
           echo "#!/usr/bin/env bash"              > $TEMP_DIR/fennel
           echo "rlwrap \"$fennel_path\" \"\$@\"" >> $TEMP_DIR/fennel
           chmod +x $TEMP_DIR/fennel
