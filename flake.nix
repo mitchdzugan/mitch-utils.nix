@@ -189,6 +189,7 @@
           TEMP_DIR=$(mktemp -d --)
           trap 'rm -rf "$TEMP_DIR"' EXIT
 
+          export LUA_PATH="$LUA_PATH;$LUA_PATH_EXTRA"
           export FENNEL_MACRO_PATH="$FLAKE_ROOT/macro-path/?.fnl;$FENNEL_MACRO_PATH"
           export FENNEL_PATH="$FLAKE_ROOT/src/?.fnl"
 
